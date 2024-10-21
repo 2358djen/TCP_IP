@@ -1,0 +1,23 @@
+[ 不可行 ]
+    FILE * readfp = fdopen(sock,"r");
+    FILE * writefp= fdopen(sock,"w");
+
+    这样 readfp 和 writefp 是使用同一个文件描述符 sock 创建的
+    因此关闭任何一个都会导致对应套接字整体关闭
+
+[ 复制文件描述符 ]
+    描述符 fd -> fd1 , fd2
+    虽然这样关闭一个后不会导致套接字关闭,但是剩下的那个同样具有 IO 能力
+    因此不算 "半关闭"
+
+
+#include <unistd.h>
+int dup(int fildes)
+int dup2(int files,int files2)
+    成功:复制的文件描述符,失败:-1
+
+    files:  需要复制的文件描述符
+    files2: 明确指定文件描述符的整数数值
+
+[ 实现 ]
+    复制 + shutdown 发送 EOF 进入半关闭状态

@@ -1,0 +1,19 @@
+#include "../include/func.h"
+
+字节序:
+    不同CPU中数值在内存中保存的方式是不同的(主机字节序 Host Byte Order)
+    大端序:高位字节存放在低位地址
+    小端序:高位字节存放在高位地址
+    为了避免传输时数据出错,网络字节序:统一为大端序
+
+    字节序转换:
+    unsigned short htons(unsigned short);//把short型主机字节序转换成网络字节序
+    unsigned short ntohs(unsigned short);//...
+    unsigned long htonl(unsigned long);//...
+    unsigned long ntohl(unsigned long);//把long型网络字节序转换成主机字节序
+
+        h: Host
+        n: NetWork
+        s: short    (2字节)
+        l: long     (Linux中的long型占据4个字节,这很关键)
+        即使我们使用的系统是大端序的,为sockaddr_in结构体变量赋值时(建议)转换字节序,虽然此操作没有任何变化

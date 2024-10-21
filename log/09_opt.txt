@@ -1,0 +1,66 @@
+
+套接字的多种可选项:
+
+-------------------------------------------------------------------
+        协议层            选项名             读取        设置         
+-------------------------------------------------------------------
+                        SO_SNDBUF           O           O
+                        SO_RCVBUF           O           O
+                        SO_REUSEADDR        O           O
+                        SO_KEEPALIVE        O           O
+      SOL_SOCKET        SO_BROADCAST        O           O
+                        SO_DONTROUTE        O           O
+                        SO_OOBINLINE        O           O
+                        SO_ERROR            O           X
+                        SO_TYPE             O           X
+-------------------------------------------------------------------
+                        IP_TOS              O           O
+                        IP_TTL              O           O
+      IPPROTO_IP        IP_MULTICAST_TTL    O           O
+                        IP_MULTICAST_LOOP   O           O
+                        IP_MULTICAST_IF     O           O
+-------------------------------------------------------------------
+                        TCP_KEEPALIVE       O           O
+      IPPROTO_TCP       TCP_NODELAY         O           O
+                        TCP_MAXSEG          O           O
+-------------------------------------------------------------------
+
+
+
+#include <sys/socket.h>
+
+int getsockopt(int sock,int level,int optname,void * optval,socklen_t * optlen);
+    成功:0,失败:-1
+
+    sock    用于查看选项套接字文件描述符
+    level   需要查看的可选项的协议层
+    optname 需要查看的可选项名
+    optval  保存查看结果的缓冲地址值
+    optlen  向第四个参数optval传递的缓冲大小,调用函数后,该变量中保存通过第四个参数返回的可选信息的字节数
+
+int setsockopt(int sock,int level,int optname,const void * optval,socklen_t optlen);
+    成功:0,失败:-1
+
+    sock    用于更改选项套接字文件描述符
+    level   需要更改的可选项的协议层
+    optname 需要更改的可选项名
+    optval  保存更改信息的缓冲地址值
+    optlen  向第四个参数optval传递的可选信息的字节数
+
+
+
+
+1. SO_SNDBUF 和 SO_RCVBUF 
+    更改IO缓冲
+
+2. SO_REUSEADDR 和 Time-Wait
+    当SO_REUSEADDR = 1 时
+    可将Time-Wait状态下的套接字端口号分配给新的套接字(先断开连接的套接字会进入Time-Wait)
+
+3. TCP_NODELAY
+    Nagle算法:
+    防止数据包过多而发生网络过载
+    "只有确认对方正确接收上一条数据(收到ACK消息), 才会发送下一条数据"(TCP套接字默认打开Nagle算法)
+    例如发送数据时进行最大限度地缓冲,直到收到ACK,才进行下一步发送
+    [ 建议 ] 未准确判断数据特性时不应禁用Nagle算法
+            如果有必要(比如大文件传输)就可以禁用Nagle算法:将TCP_NODELAY设为1

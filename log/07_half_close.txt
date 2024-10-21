@@ -1,0 +1,11 @@
+#include <sys/socket.h>
+
+int shutdown(int sock,int howto);
+    成功:0,失败:-1
+
+    sock    需要断开的套接字文件描述符
+    howto   断开方式
+
+    SHUT_RD         断开输入流,套接字无法接收数据,即使输入缓冲收到数据也会被抹去,并且无法调用相关函数
+    SHUT_WR         断开输出流,中断传输流,但若输出缓存还有未传输的数据还会继续传输
+    SHUT_RDWR       同时断开IO流,相当于先后调用了参数为SHUT_RD和SHUT_WR的shutdown函数

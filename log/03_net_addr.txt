@@ -1,0 +1,33 @@
+#include "../include/func.h"
+
+对于IP地址的表示,我们熟悉的是点分十进制表示法
+因此需要将字符串转换成32位整型数据
+
+#include <arpa/inet.h>
+
+in_addr_t inet_addr(const char * string);
+//成功:返回32位大端序整数型值,失败时返回 INADDR_NONE
+//另外该函数还可以检测无效地址(如:1.2.3.256) 和转换成网络字节序
+
+int inet_aton(const char * string,struct in_addr * addr);
+//string:   含有需要转换的IP地址信息的字符串地址变量
+//addr:     保存转换结果的in_addr结构体的地址值
+//成功:1 失败:0
+
+char * inet_ntoa(struct in_addr adr);
+//成功:转换的字符串的地址 失败:-1
+//函数自动分配内存空间,使用后要尽快将结果复制到其他空间,再次调用时可能会覆盖原先结果
+
+
+网络地址初始化
+
+struct sockaddr_in addr;
+char * serv_ip = "211.217.168.13";
+char * serv_port = "9190";
+memset(&addr,0,sizeof(addr));
+addr.sin_family = AF_INET
+addr.sin_addr.s_addr = inet_addr(serv_ip);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    //一般服务器都是用INADDR_ANY常数自动获取服务器IP (服务器只有一个IP/NIC)
+    //若服务器存在多个IP 或者 客户端存在部分服务功能,才注明IP
+addr.sin_port = htons(atoi(serv_port));

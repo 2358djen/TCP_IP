@@ -1,0 +1,88 @@
+线程具有单独的执行流,因此单独需要定义线程的main函数,还需要请求操作系统在单独的执行流中执行该函数
+
+    #include <pthread.h>
+    int pthread_create
+    (
+        pthread_t * restrict thread,
+        const pthread_attr_t * restrict attr,
+        void * (* start_routine)(void *),
+        void * restrict arg
+    );
+        成功:0,失败:其他
+        thread:         保存新创建线程ID的变量地址值
+        attr:           用于传递线程属性参数,传递NULL时,创建默认属性的线程
+        start_routine:  相当于线程main函数的,在单独执行流中执行的函数地址(函数指针)
+        arg:            通过第三个参数传递调用函数时包括传递参数信息的变量地址值
+        注意:进程终止后,所有线程会同时终止
+
+    int pthread_join(pthread_t thread,void ** status);
+        成功:0,失败:其他值
+        thread:         该参数值ID的线程终止后才会从该函数返回
+        status:         保存线程的main函数返回值的指针变量地址值
+        说明:等待线程终止,并且获得其线程主函数返回值
+
+
+线程安全函数(Thread-safe function)
+非线程安全函数(Thread-unsafe function)
+
+    线程安全函数被多个线程同时调用也不会引发问题(但是同样可能存在临界区,可以通过一些措施避免问题)
+    非线程安全函数被多个线程调用时会引发问题
+
+    例如,
+    struct hostent * gethostbyname(const char * hostname);
+    系统会提供同功能的线程安全函数
+    struct hostent * gethostbyname_r(...);//很复杂
+    线程安全函数的名称后缀通常为_r,定义_REENTRANT宏自动转换调用
+
+
+
+互斥量(Mutual Exclusion)
+    #include <pthread.h>
+    int pthread_mutex_init(pthread_mutex_t * mutex,const pthread_mutexattr_t * attr);//初始化,创建
+    int pthread_mutex_destroy(pthread_mutex_t * mutex);//销毁
+        成功:0,失败:其他值
+        mutex:          创建或销毁的互斥量变量地址值
+        attr:           创建互斥量时设定属性,没有则传递NULL
+
+        pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;//初始化
+        但是通过宏初始化时很难发现发生的错误,因此推荐pthread_mutex_init函数初始化
+
+
+    int pthread_mutex_lock(pthread_mutex_t * mutex);//锁定
+    //...临界区开始
+    //...临界区范围不宜过大也不宜过小
+    //...临界区结束
+    int pthread_mutex_unlock(pthread_mutex_t * mutex);//解锁
+
+死锁(Dead-lock)
+    临界区迟迟不解锁,使得某些需要访问临界区的线程一直阻塞在pthread_mutex_lock无法返回
+
+
+信号量(Semaphore)
+    #include <semaphore.h>
+    int sem_init(sem_t * sem,int pshared,unsigned int value);
+    int sem_destory(sem_t * sem);
+    成功:0,失败:其他值
+
+    sem:        创建或销毁的信号量变量地址值
+    pshare:     传递其他值时,创建可由多个进程共享的信号量;传递0,创建只允许一个进程内部使用的信号量
+    value:      指定新创建的信号量的初始值
+
+
+    int sem_post(sem_t * sem);//信号量+1
+    int sem_wait(sem_t * sem);//信号量-1
+    成功:0,失败:其他值
+    sem:        传递保存信号量读取值的变量地址值
+
+
+线程的销毁
+
+    pthread_join
+    int pthread_detach(pthread_t thread);
+    成功:0,失败:其他值
+    thread:     终止时需要销毁的线程ID
+
+    说明:与pthread_join不同的是,pthread_detach函数不会引起线程终止或进入阻塞状态
+    它可以引导销毁线程创建的内存空间,并且调用后不可再使用pthread_join函数
+
+

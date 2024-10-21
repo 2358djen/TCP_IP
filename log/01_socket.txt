@@ -1,0 +1,143 @@
+#include "../lib/func.h"
+
+
+#include <sys/socket.h>
+int socket(int domain,int type,int protocol);
+    成功:文件描述符,失败:-1
+
+    domain:(用于设置网络通信的域,函数根据这个参数选择通信协议的族.)
+    PF_UNIX,PF_LOCAL    本地通讯
+    AF_INET,PF_INET     IPv4
+    PF_INET6            IPv6
+    PF_IPX              IPX-Novell协议
+    PF_NETLINK          内核用户界面设备
+    PF_X25              ITU-T X25 / ISO-8208协议
+    PF_AX25	            Amateur radio AX.25
+    PF_ATMPVC	        原始ATM PVC访问
+    PF_APPLETALK	    Appletalk
+    PF_PACKET	        底层包访问
+
+
+    type:(用于设置套接字通信的类型)
+    SOCK_STREAM	        TCP连接,序列化、可靠、双向连接的字节流,没有数据边界,支持带外数据传输
+    SOCK_DGRAM	        支持UDP连接(无连接状态的消息)
+    SOCK_SEQPACKET	    序列化包,提供一个序列化、可靠、双向的基本连接的数据传输通道,数据长度定常.每次调用读系统调用时数据需要将全部数据读出
+    SOCK_RAW	        RAW类型,提供原始网络协议访问
+    SOCK_RDM	        提供可靠的数据报文,不过可能数据会有乱序
+    SOCK_PACKET	        这是一个专用类型,不能呢过在通用程序中使用
+
+        类型为SOCK_STREAM的套接字表示一个双向的字节流,与管道/传送带类似.
+        流式的套接字在进行数据收发之前必须已经连接,连接使用**connect()**函数进行.
+        一旦连接,可以使用read()或者write()函数进行数据的传输.
+        流式通信方式保证数据不会丢失或者重复接收,当数据在一段时间内任然没有接受完毕,可以认为这个连接已经死掉.
+
+        SOCK_DGRAM和SOCK_RAW 这个两种套接字:
+        可以使用函数**sendto()**来发送数据,使用recvfrom()函数接受数据,recvfrom()接受来自制定IP地址的发送方的数据.
+        SOCK_PACKET是一种专用的数据包,它直接从设备驱动接受数据.
+
+
+    protocol:(用于制定某个协议的特定类型,即type类型中的某个类型)
+            通常某协议中只有一种特定类型,这样protocol参数仅能设置为0;
+            但是有些协议有多种特定的类型,就需要设置这个参数来选择特定的类型.
+
+    套接字类型:
+    1.SOCK_STREAM
+        "可靠的,按顺序传递的,基于字节的面向连接的数据传输方式的套接字"
+        特点:传输数据不会消失,传输数据有序,数据没有边界(当缓冲满了才会统一处理数据)
+            会根据接收端状态控制传输(接收端缓冲满了就会暂停传输)
+
+    2.SOCK_DGRAM
+        "不可靠的,不按照顺序的,以数据高速传输为目的面向消息的套接字"
+        特点:强调快速而非顺序,数据可能丢失或损毁,存在数据边界,限制传输数据大小
+
+    PF_INET + SOCK_STREAM = IPPROTO_TCP
+    PF_INET + SOCK_DGRAM = IPPROTO_UDP
+
+
+#include <sys/socket.h>
+int bind(int sockfd,struct sockaddr * myaddr,socklen_t addrlen);
+//成功:0,失败:-1
+sockfd:需要绑定的socket.
+addr:存放了服务端用于通信的地址和端口.
+addrlen:表示 addr 结构体的大小
+
+    struct sockaddr_in
+    {
+        sa_family_t     sin_family;     //地址族
+        uint16_t        sin_port;       //16位TCP/UDP端口号
+        struct in_addr  sin_addr;       //32位IP地址
+        char            sin_zero[8];    //不使用
+    };
+    其中:
+        sin_family:
+            每种协议适用的地址组均不同,IPv4使用4字节地址族,IPv6使用6字节地址族
+            AF_INET     IPv4使用的地址族
+            AF_INET6    IPv6使用的地址族
+            AF_LOCAL    本地通信采用的UNIX协议的地址族
+
+        sin_port:
+            保存16位端口号(以网络字节序保存)
+
+        sin_addr:
+            保存32位IP地址信息,且也已网络字节序保存
+            struct in_addr
+            { 
+                In_addr_t       s_addr;         //32位IPv4地址(uint32_t)
+            };
+
+        sin_zero:
+            无特殊含义,只是为了使结构体sockaddr_in的大小与sockaddr结构体保持一致而插入的成员,必须填充0
+
+    在bind函数中实际使用的是sockaddr:
+    struct sockaddr
+    {
+        sa_family_t     sin_family;         //地址族(Address Family)
+        char            sa_data[14];        //地址信息
+    };
+        sa_data:
+            包含IP地址和端口号,剩余部分填充0
+            (这也是bind函数要求的,使用麻烦,因此有了sockaddr_in)
+            sockaddr_in 是为 sockaddr 设计的,必须和其保持一致
+
+
+#include <sys/socket.h>
+int listen(int sockfd,int backlogs);
+//成功:0,失败:-1
+sockfd:希望进入连接请求状态的套接字文件描述符,传递的描述符套接字参数成为服务器端的套接字
+backlogs:连接请求等待队列的长度,若为5,表示最多能使5个连接请求进入队列,频繁接受请求的web服务器至少应为15
+//调用listen函数可以生成一个门卫和等候室
+
+#include <sys/socket.h>
+int accept(int sockfd, struct sockaddr * addr,socklen_t * addrlen);
+//成功:文件描述符,失败:-1
+sockfd:服务器套接字文件描述符
+addr:保存发起连接请求的客户端地址信息的变量地址值,调用函数后向传来的地址变量参数填充客户端地址信息
+addrlen:第二个参数addr结构体的长度,但是存有长度的变量地址,函数调用完成后该变量即被填入客户端地址长度
+//accept函数调用成功时,函数内部将产生用于数据I/O的套接字,并返回其文件描述符(套接字时自动创建的,并且自动与发起请求的客户端建立连接)
+//accept函数从队头开始服务,若队列为空,函数不会返回,直到队列中出现新的客户端连接
+
+#include <sys/socket.h>
+int connect(int sockfd,struct sockaddr * serv_addr, socklen_t addrlen);
+//成功:0,失败:-1
+sockfd:客户端套接字文件描述符
+serv_addr:保存目标服务器端地址信息的变量地址值
+addrlen:以字节为单位传递已传递给第二个结构体参数serv_addr的地址变量的长度
+//connect函数返回仅当: 1.服务器端接受连接请求, 2.发生断网等异常情况而中断连接的请求
+//"接受连接"并不意味着服务器调用accept函数,其实服务器是把连接请求信息记录到等待队列,因此connect函数返回后并不会立即进行数据交换
+//客户端的IP和端口在调用connect函数时自动分配,IP使用主机的IP,端口随机
+
+Portable Operating System Interface,可移植操作系统接口
+---------------------------------------------------sys/types.h
+int8_t          signed 8-bit int 
+uint8_t         unsigned 8-bit int
+int16_t         signed 16-bit int
+uint16_t        unsigned 16-bit int
+int32_t         signed 32-bit int
+uint32_t        unsigned 32-bit int
+---------------------------------------------------sys/socket.h
+sa_family_t     地址族(Address Family)
+socklen_t       长度(Length Of Struct)
+---------------------------------------------------netinet/in.h
+in_addr_t       IP地址,声明为uint32_t
+in_port_t       端口号,声明位uint16_t
+

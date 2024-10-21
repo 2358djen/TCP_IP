@@ -1,0 +1,91 @@
+#预处理:
+#    gcc -E -I./inc Hello.c -o Hello.i   //头文件,宏定义展开后的文件
+#    cpp Hello.c -I./inc -o Hello.i
+
+#编译:
+#    gcc -S Hello.i -o Hello.s   //汇编代码文件
+
+#汇编:
+#    gcc -c Hello.s -o Hello.o   //目标文件
+#    as Hello.s -o Hello.o
+
+#链接:
+#    gcc Hello.o -o Hello        //可执行文件
+#    ld -o Hello Hello.o inc/*.o
+
+#参数解释:
+#-E:让编译器在预处理之后就退出,不进行后续编译过程
+#-I:指定头文件目录
+#-o:指定输出文件名
+#-S:让编译器在编译后停止
+
+#1、变量的定义
+#在Makefile中我们要定义一系列的变量,变量一般都是字符串
+#这个有点像C语言中的宏,当Makefile被执行时,其中的变量都会被扩展到相应的引用位置上
+
+#2、显式规则
+#显式规则说明了,如何生成一个或多的的目标文件
+#这是由Makefile的书写者明显指出,要生成的文件,文件的依赖文件,生成的命令. 刚才写的疑似shell脚本的Makefile全部都是显示规则
+
+#3、隐晦规则
+#由于我们的make有自动推导的功能,所以隐晦的规则可以让我们比较粗糙地简略地书写Makefile,这是由make所支持的
+
+#4、文件指示
+#其包括了三个部分,一个是在一个Makefile中引用另一个Makefile,就像C语言中的include一样
+
+#5、注释
+#Makefile中只有行注释,和UNIX的Shell脚本一样,其注释是用“#”字符
+
+
+#显示规则
+#目标文件:依赖文件
+#[TAB]指令
+#第一个目标文件是最终目标,有点像递归
+#伪目标: .PHONY
+# hello:hello.o
+# 	gcc hello.o -o hello
+
+# hello.o:hello.s
+# 	gcc -c hello.s -o hello.o
+
+# hello.s:hello.i
+# 	gcc -S hello.i -o hello.s
+
+# hello.i:hello.c
+# 	gcc -E ./hello.c -o ./hello.i
+
+
+#多文件合并
+#test:main.o hello.o
+#	gcc main.o hello.o -o test
+
+#main.o:main.c
+#	gcc -c main.c -o main.o
+
+#hello.o:hello.c
+#	gcc -c hello.c -o hello.o
+
+#变量
+# =(替换)	+=(追加)	:=(恒等于)
+
+
+
+#隐含规则
+# %.c %.o 任意的.c .o		*.c *.o 所有的.c .o
+# %.out:%.c
+
+#通配符
+# $@ 目标文件
+# $^ 所有的依赖文件
+# $< 第一个依赖文件
+# $* 不包含扩展名的目标文件名称
+# $+ 所有的依赖文件,以空格分开,并以出现的先后为序,可能出现重复的依赖文件
+# $? 所有时间戳比目标文件晚的文件
+#all:
+
+#.PHONY:
+#test:
+#	$(CC) $(EXAM)/03_inet_ntoa.c -I$(LIB)/func.h -o $(BIN)/a.out
+
+#clean:
+#	rm -f  hello.o main.o

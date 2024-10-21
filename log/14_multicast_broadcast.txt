@@ -1,0 +1,41 @@
+[ 多播 ]
+    (Multicast) 基于UDP 完成的,特点:
+        1.多播服务器针对特定多播组,只发送一次数据
+        2.即使只发送1次数据,但该组内的所有客户端都会接收数据
+        3.多播组数可在IP地址范围内任意增加
+        4.加入特定组即可接收发往该多播组的数据
+    多播组是D类IP地址(224.0.0.0 ~ 255.255.255.255)
+
+    TTL 设定方法
+        协议层:IPPROTO_IP,选项:IP_MULTICAST_TTL
+        int send_sock = socket(PF_INET,SOCK_DRRAM,0);
+        int time_to_live = 64;
+        setsockopt(send_sock,IPPROTO_IP,IP_MULTICAST_TTL,(void *)&time_to_live,sizeof(time_to_live));
+
+    加入多播组
+        协议层:IPPROTO_IP,选项:IP_ADD_MEMBERSHIP
+        int recv_sock = socket(PF_INET,SOCK_DRRAM,0);
+        struct ip_mreq join_addr;
+        join_addr.imr_multiaddr.s_addr = "多播组地址信息";
+        join_addr.imr_interface.s_addr = "加入多播组的主机地址信息";
+        setsockopt(recv_sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,(void *)&join_addr,sizeof(join_addr));
+
+        struct ip_mreq
+        {
+            struct in_addr imr_multiaddr;
+            struct in_addr imr_interface;
+        }
+
+[ 广播 ]
+        (Broadcast) 基于UDP,特点:
+        1.和多播不同,广播只能向同一网络中传输数据
+        2.直接广播:网络号.1111 1111...
+        3.本地广播:1111 1111...
+
+    设置Broadcast
+        int bcast = 1;
+        int send_sock = socket(PF_INET,SOCK_DRRAM,0);
+        setsockopt(send_sock,SOL_SOCKET,SO_BROADCAST,(void *)&bcast,sizeof(bcast));
+
+        
+

@@ -1,0 +1,136 @@
+[ 标准IO函数的优点 ]
+    1.具有良好的移植性
+    2.标准IO函数可以利用缓冲提高性能
+        <-- IO函数输入缓冲 <- 套接字输入缓冲 <--
+        --> IO函数输出缓冲 -> 套接字输出缓冲 -->
+
+[ 标准IO函数的缺点 ]
+    1.不容易进行双向通信
+    2.有时候可能需要频繁调用fflush函数
+    3.需要以FILE结构体指针的形式返回文件描述符
+
+
+
+[ 几种常见函数 ]
+
+#include <stdio.h>
+FILE * fopen(const char * filename, const char *mode)
+    成功:FILE结构体指针,失败:NULL
+    filename:   文件名
+    mode:       文件打开模式,具体包括:
+        
+-----------------------------------------------------------------------------
+        文件使用方式                含义                 如果指定文件不存在
+-----------------------------------------------------------------------------
+            r               为读取打开文本文件                  出错
+            w               为写入打开文本文件                建立新文件
+            a               为追加写入打开文本文件               出错
+            rb              为读取打开二进制文件                 出错
+            wb              为写入打开二进制文件              建立新文件
+            ab              为追加写入打开二进制文件              出错
+            r+              为读取和写入打开文本文件              出错
+            w+              为读取和写入(新建)文本文件         建立新文件
+            a+              为读取和写入打开文本文件              出错
+            rb+             为读取和写入打开二进制文件            出错
+            wb+             为读取和写入(新建)二进制文件       建立新文件
+            ab+             为读取和写入打开二进制文件            出错
+-----------------------------------------------------------------------------
+总结:只有带有"w"才可以新建文件,不带有"w"则文件必须存在;带有"+"同时具有读取和写入;有"b"表示二进制文件,无"b"表示文本文件;
+
+二进制文件(b)和文本文件的区别:换行的处理
+    C语言换行:    \n 
+    Unix换行:    \n     (LF)
+    Windows换行: \r\n   (CTRL+LF)(^M$)
+
+    例如:在Windows上使用C语言读取文件时,要将连续的 '\r''\n'转换成'\n'
+                           写入文件时,要将'\n'转换成'\r''\n'
+
+int fclose(FILE * stream)
+    成功:0,失败:EOF
+    "撤销文件信息区和文件缓冲区"
+    
+int fscanf(FILE *stream, const char *format, ...)
+    成功:成功匹配和赋值的个数,失败或到达文件末尾:EOF
+    "将流stream中的数据格式化(利用特殊标记如空格,井号,等于号)赋值给变量"
+
+int fprintf(FILE *stream, const char *format, ...)
+    成功:写入的字符总数,失败:负数
+    "将变量组成的字符串输出到流stream"
+
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
+    成功:成功读取的元素单位个数.若返回值与设定的元素单位数值不一致,则有可能发生错误或者到达文件末尾
+
+    ptr:        至少有 size * nmemb 大小的内存块指针(存放数据)
+    size:       每一个元素单位的大小(字节)
+    nmemb:      元素单位的个数
+    stream:     指向FILE对象的指针(从流中读取)
+
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
+    同理,将内存块ptr中的内容写入流
+
+int fgetc(FILE *stream)
+    成功:读取到的(int)(unsigned char c),失败:EOF
+    "从指定的流 stream 获取下一个字符并把位置标识符往前移动"
+
+int fputc(int char, FILE *stream)
+    成功:被写入的字符,失败:EOF
+    "把参数 char 指定的字符写入到指定的流 stream 中,并把位置标识符往前移动"
+
+char * fgets(char *str, int n, FILE *stream)
+    成功:读取到的字符串的首地址(str),失败:NULL
+    "从指定的流 stream 读取一行并把它存储在 str 所指向的字符串内"
+    "当读取 (n-1) 个字符时,或者读取到换行符时,或者到达文件末尾时,它会停止"
+
+int fputs(const char *str, FILE *stream)
+    成功:非负数,失败:EOF
+    "把字符串写入到指定的流 stream 中,但不包括空字符"
+
+int fflush(FILE *stream)
+    成功:0,失败:EOF
+    " 刷新流 stream 的输出缓冲区,即强制将缓冲区内的数据写回参数 stream 指定的文件中"
+
+long int ftell(FILE *stream)
+    成功:位置标识符的当前值,失败:-1L
+
+int feof(FILE *stream)
+    "测试给定流 stream 的文件结束标识符"
+
+int fseek(FILE *stream, long int offset, int whence)
+    成功:0,失败:非零
+    "设置流 stream 的文件位置为从whence开始的offset"
+    "重置指针意味着文件内容有可能被覆盖"
+
+    offset: 相对whence的偏移量,以字节为单位
+    whence: SEEK_SET(文件开头),SEEK_CUR(文件指针的当前位置),SEEK_END(文件末尾)
+
+void rewind(FILE *stream)
+    "设置文件位置为给定流 stream 的文件的开头"
+
+int ferror(FILE *stream)
+    "测试给定流 stream 的错误标识符"
+    "例如读取一个以只写模式打开的文件,写入一个以只读模式打开的文件"
+
+void clearerr(FILE *stream)
+    "清除给定流 stream 的文件结束和错误标识符"
+
+
+[ 转化型函数 ]
+
+
+#include<stdio.h>
+FILE * fdopen(int fildes,const char * mode)
+    成功:FILE结构体指针,失败:NULL
+
+    fildes: 需要转换的文件描述符
+    mode:   将要创建的FILE结构体指针的模式信息
+
+int fileno(FILE * stream)
+    成功:文件描述符,失败:-1
+    
+
+    "文件操作可以用FILE结构,也可以使用文件描述符,但无论如何,文件就是文件,与打开方式无关"
+    "文件表示方式的转化"仅"存在 打开权限(可读/可写) 的继承关系"
+    "所有文件方式共享文件状态,包括文件指针,文件是否关闭等"
+    "比如使用了fseek(fp,0,SEEK_END),那么read(fd,buf,BUF_SIZE)无效(因为文件指针被另外一种方式移动到末尾)"
+    "再比如使用了fclose(fp),就没有必要再次close(fd)了(因为文件已经被另外一种方式关闭了),反之亦然"
+    "建议:操作文件时尽量使用同一套函数,如果需要转化,则尽量使用转化后对应的一套函数,总之 混用慎用"

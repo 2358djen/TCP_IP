@@ -1,0 +1,30 @@
+#include <netdb.h>
+
+struct hostent * gethostbyname(const char * hostname);
+    成功:hostent结构体地址,失败:NULL指针
+
+    struct hostent
+    {
+        char * h_name;          // 该变量中存有官方域名 ( Official Domain Name ) , 官方域名表示某一主页,但实际上一些著名公司的域名并未用官方域名注册
+        char ** h_aliases;      // 可以通过多个域名访问同一个主页,同一IP可以绑定多个域名,因此除了官方域名外还可以指定其他域名
+        int h_addrtype;         // 保存地址族,例如IPv4: AF_INET
+        int h_length;           // IP地址长度,IPv4:4字节,IPv6:16字节
+        char ** h_addr_list;    // [最重要成员] 以整数形式保存域名对应的IP地址
+    }
+
+    h_aliases -> [      ] -> alias #1 \0
+                 [      ] -> alias #2 \0
+                   ...
+                 [ NULL ]
+
+    h_addr_list->[      ] -> IP addr #1
+                 [      ] -> IP addr #2
+                   ... 
+                 [ NULL ]
+
+struct hostent * gethostbyaddr(const char * addr,socklen_t len,int family);
+    成功:hostent结构体地址,失败:NULL指针
+
+    addr    含有IP信息的in_addr结构体指针,为了同时传递IPv4地址之外的其他信息,改变量声明为char指针
+    len     向第一个参数传递的地址信息的字节数,IPv4为4,IPv6为16
+    family  传递地址族信息,IPv4为AF_INET,IPv6为AF_INET6
